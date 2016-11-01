@@ -8,7 +8,7 @@ the commands are fast and lightweight thanks to the MQTT protocol.
 ![SmartClock](readme_images/clock_external.jpg)  
 
 ## Android Application
-![Application](readme_images/app.jpg)
+![Application](readme_images/app.png)
 
 ## Features
 * Remote control Electric devices that are support infra-red remote, and get information about the room (like temperature of the room).
@@ -20,8 +20,8 @@ the commands are fast and lightweight thanks to the MQTT protocol.
 * The main components are: Arduino Nano, ESP8266, RTC module, Bluetooth,light sensore, PIR sensor, infra-red diode and sound sensor.
 ![SystemComponents](readme_images/circuit.jpg)
 
-## The 7 Segment - behind the scenes (:
-* Digital led strip, model WS2812b, cutted and soldered again at each 3 leds. 
+## The '7-Segment' -> behind the scenes (:
+* Digital led strip, model WS2812b, cutted and soldered again at each 3 leds. The main advantage for using digital led strip is that we need only 1 wire/GPIO to control all the digits (while using a normal 7-segment screen needs 4x7 GPIO).
 * The digits are 'created' by turning on the right 'pixels' (pixel mean each 3 leds).
 ![SystemComponents](readme_images/7segment_strip.jpg)
 
