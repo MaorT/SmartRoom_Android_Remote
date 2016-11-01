@@ -8,7 +8,7 @@ the commands are fast and lightweight thanks to the MQTT protocol.
 ![SmartClock](readme_images/clock_external.jpg)  
 
 ## Android Application
-![Application](readme_images/app.png)
+![Application](readme_images/App.png)
 
 ## Features
 * Remote control Electric devices that are support infra-red remote, and get information about the room (like temperature of the room).
