@@ -1,11 +1,30 @@
 <resources>
 
+
+    <style name="AppTheme" parent="AppTheme.Base">
+
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+    </style>
+
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+
+    <style name="AppTheme.Base" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">#039be5</item>
+        <item name="colorPrimaryDark">#0277bd</item>
+        <item name="android:navigationBarColor">#0e5994</item>
+        <!--
+            Theme customizations available in newer API levels can go in
+            res/values-vXX/styles.xml, while customizations related to
+            backward-compatibility can go here.
+        -->
+    </style>
+
+
+
+    <style name="ActivityTitle">
+        <item name="android:textSize">20dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">#000000</item>
     </style>
 
 </resources>

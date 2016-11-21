@@ -8,9 +8,11 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,9 +23,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
 
-    Button btnSettings;
 
     private static String LOG_TAG = "smartRoom";
 
@@ -42,10 +43,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ListView lv = (ListView) findViewById(R.id.listViewButtons);
         viewerConnectionTxt = (TextView)findViewById(R.id.textViewStatus);
-        btnSettings = (Button)findViewById(R.id.btnSettings);
+
         Log.d(LOG_TAG,"MainActivity onCreate");
         ArrayList<IrDevice> devices = new ArrayList<>();
-
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolbar);
 
         // Load the Devices and Commands from a JSON file
         try {
@@ -99,13 +101,6 @@ public class MainActivity extends AppCompatActivity {
         mIntentFilter.addAction(mBroadcastStringAction);
         registerReceiver(mReceiver,mIntentFilter);
 
-        btnSettings.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(MainActivity.this,Preferences.class);
-                startActivity(i);
-            }
-        });
     }
 
 
@@ -194,6 +189,29 @@ public class MainActivity extends AppCompatActivity {
             viewerConnectionTxt.setTextColor(Color.RED);
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                Intent i = new Intent(MainActivity.this, Preferences.class);
+                startActivity(i);
+                // User chose the "Settings" item, show the app settings UI...
+                return true;
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
 
 }
 

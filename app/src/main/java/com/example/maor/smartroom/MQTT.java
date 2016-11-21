@@ -6,6 +6,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.IBinder;
 import android.support.v4.app.TaskStackBuilder;
 
@@ -256,15 +258,16 @@ public class MQTT extends Service implements MqttCallback {
                 | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         // todo : add large icon
-//        Bitmap icon = BitmapFactory.decodeResource(getResources(),
-//                R.drawable.ic_post_icon);
+        Bitmap largeIcon = BitmapFactory.decodeResource(getResources(),
+                R.drawable.remote1);
 
 //        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
 //                notificationIntent, 0);
         Notification.Builder builder = new Notification.Builder(getApplicationContext());
         builder.setContentTitle(title);
         builder.setContentText(text);
-        builder.setSmallIcon(R.drawable.ok);
+        builder.setSmallIcon(R.drawable.remote1);
+        builder.setLargeIcon(largeIcon);
         builder.setWhen(System.currentTimeMillis());
     //    builder.setContentIntent(pendingIntent);
 
