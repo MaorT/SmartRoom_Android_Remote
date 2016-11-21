@@ -20,6 +20,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
+        <activity android:name=".Preferences"></activity>
+
+        <service android:name=".MQTT" />
+
     </application>
 
 </manifest>

@@ -1,6 +1,14 @@
 package com.example.maor.smartroom;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.IBinder;
+import android.support.v4.app.TaskStackBuilder;
+
 import android.util.Log;
 import android.widget.Toast;
 
@@ -8,18 +16,83 @@ import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 
-public class MQTT implements MqttCallback {
+public class MQTT extends Service implements MqttCallback {
 
     private static MqttClient client;
     private static boolean newDataFlag = false;
-    private String lastSubscribeMsg = "0";
 
-    public static boolean isNewDataFlag() {
-        return newDataFlag;
+    final static String LOG_TAG = "smartRoom";
+
+   // private IntentFilter mIntentFilter;
+    public static final String mBroadcastStringAction = "com.example.maorservice.string";
+    String ClientId = System.getProperty("user.name") + "." + System.currentTimeMillis(); // Generate a unique user id
+    private static boolean serviceOnFlag = false; //helps to know the service status (run/stop)
+    Notification notification = null;
+  //  private static Context context = null;
+
+
+
+    //region LifeCycle region
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(LOG_TAG,"On start command");
+        if (intent.getAction().equals(Constants.ACTION.STARTFOREGROUND_ACTION)) {
+            //context = this.getBaseContext();
+            Preferences.LoadPreferences(getApplicationContext());
+            Connect(Preferences.mqtt_server_address,Preferences.mqtt_port,ClientId,
+                    Preferences.mqtt_userName,Preferences.mqtt_password);
+            Subscribe(Preferences.mqtt_in_topic);
+            serviceOnFlag = true;
+            notification = BuildForegroundNotification(getString(R.string.app_name),"Connecting");
+            TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
+            stackBuilder.addParentStack(MainActivity.class);
+            startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE,notification);
+
+            if(IsConnected()){
+                Update_Foreground_Notification_Text("Connected"); // todo : Do something when unsuccessful connection
+                NotifyBroadcast("system","connected",false);
+            }
+
+        }
+        else if (intent.getAction().equals(
+                Constants.ACTION.STOPFOREGROUND_ACTION)) {
+            stopForeground(true);
+            stopSelf();
+        }
+        return START_STICKY;
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(LOG_TAG,"SmartRoom MQTT on destroy");
+        serviceOnFlag = false;
+        if(client != null && IsConnected()){
+            UnSubscribe(Preferences.mqtt_in_topic);
+            Disconnect();
+        }
+        Toast.makeText(getApplicationContext(), "Smartroom Service has been stopped", Toast.LENGTH_SHORT).show();
+        //unregisterReceiver(mReceiver);
+    }
 
-    public MQTT() {}
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Toast.makeText(getApplicationContext(), "Smartroom Service has been started", Toast.LENGTH_SHORT).show();
+        Log.d(LOG_TAG,"SmartRoom MQTT on create");
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        // Wont be called as service is not bound
+        return null;
+    }
+
+    //endregion
+
+
+    //region Connection and publishing region
 
     public void Connect(String url,int port,String clientID) {
         try {
@@ -70,7 +143,10 @@ public class MQTT implements MqttCallback {
 
     }
 
-
+    public boolean IsConnected()
+    {
+        return client.isConnected();
+    }
 
     public void Disconnect() {
         try {
@@ -99,7 +175,10 @@ public class MQTT implements MqttCallback {
         }
     }
 
-    public  boolean Publish(String topic, String payload) {
+    public static boolean Publish(String topic, String payload) {
+        if(client == null || !client.isConnected())
+            return false;
+
         MqttMessage message = new MqttMessage(payload.getBytes());
         try {
             client.publish(topic, message);
@@ -113,48 +192,94 @@ public class MQTT implements MqttCallback {
     }
 
 
+    //endregion
+
+
+    //region Events region
+
     @Override
     public void connectionLost(Throwable cause) {
-        // TODO Auto-generated method stub
+        Update_Foreground_Notification_Text("Disconnected!");
+        NotifyBroadcast("system","disconnected",false);
+        Log.i(LOG_TAG,"SmartRoom - Connection lost");
 
+        // Try to reconnect in a loop when the connection was lost, until service stopped or connected successfully
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(!IsConnected() && serviceOnFlag)
+                {
+                    //  NotifyBroadcast("system","Trying to reconnect..",false);
+                    Connect(Preferences.mqtt_server_address,Preferences.mqtt_port,ClientId,
+                            Preferences.mqtt_userName,Preferences.mqtt_password);
+                    if(!IsConnected())
+                        try { Thread.sleep(10000);}
+                        catch (Exception ex) {}
+                }
+                // NotifyBroadcast("system","Connected successfully",false);
+                Update_Foreground_Notification_Text("Connected");
+                NotifyBroadcast("system","connected",false);
+                Log.i(LOG_TAG,"SmartRoom - Connected successfully");
+                Subscribe(Preferences.mqtt_in_topic);
+            }
+        });
+        thread.run();
     }
 
     @Override
     public void messageArrived(String topic, MqttMessage message) throws Exception {
-        //
-       // Log.d("SmartRoom","New message arrived");
-       lastSubscribeMsg = message.toString();
-    //    Context context = MainActivity.GetContext();
-     //   Toast.makeText(context.getApplicationContext(), message.toString().replace("replied:",""), Toast.LENGTH_LONG).show();
-       // Toast.makeText(context, "dsfsfsf", Toast.LENGTH_LONG).show();
-        newDataFlag = true;
-        //HandleMessage(topic,message.toString());
-        //todo :hanlde subscribed messages - check for right topic
-
+        NotifyBroadcast(topic,message.toString(),message.isRetained());
     }
-
-    public String Get_Last_Subscribe_Msg()
-    {
-        newDataFlag = false;
-        return lastSubscribeMsg;
-    }
-
-    public boolean HaveMessage(){
-        if(lastSubscribeMsg == "0")
-            return false;
-        return newDataFlag;
-    }
-
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
         // TODO Auto-generated method stub
     }
 
+    //endregion
 
-    public boolean IsConnected()
-    {
-        return client.isConnected();
+
+    //region Notifications region
+
+    private void Update_Foreground_Notification_Text(String text){
+
+        Notification note = BuildForegroundNotification(getString(R.string.app_name),text);
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE,note);
     }
+
+    private Notification BuildForegroundNotification(String title,String text)
+    {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        notificationIntent.setAction(Constants.ACTION.MAIN_ACTION);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        // todo : add large icon
+//        Bitmap icon = BitmapFactory.decodeResource(getResources(),
+//                R.drawable.ic_post_icon);
+
+//        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+//                notificationIntent, 0);
+        Notification.Builder builder = new Notification.Builder(getApplicationContext());
+        builder.setContentTitle(title);
+        builder.setContentText(text);
+        builder.setSmallIcon(R.drawable.ok);
+        builder.setWhen(System.currentTimeMillis());
+    //    builder.setContentIntent(pendingIntent);
+
+        return builder.build();
+    }
+
+    public void NotifyBroadcast(String topic,String message,boolean retained){
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(mBroadcastStringAction);
+        broadcastIntent.putExtra("Data",message); // Add data that is sent to service
+        broadcastIntent.putExtra("Topic",topic); // Add data that is sent to service
+        broadcastIntent.putExtra("Retained",retained); // Add data that is sent to service
+        sendBroadcast(broadcastIntent);
+    }
+
+    //endregion
 
 }

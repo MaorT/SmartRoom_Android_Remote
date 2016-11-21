@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+
+
+    <PreferenceCategory android:title="Global Settings:">
+        <CheckBoxPreference
+            android:key="notification_sound"
+            android:title="Notification sound"
+            android:defaultValue="false" />
+
+        <CheckBoxPreference
+            android:key="notification_vibration"
+            android:title="Notification vibration"
+            android:defaultValue="false" />
+
+        <RingtonePreference
+            android:key="notification_ringtone"
+            android:title="Select notification sound"/>
+
+
+
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title=" MQTT Settings:"
+        android:key="pref_key_storage_settings">
+
+
+        <EditTextPreference android:title="MQTT User Name"
+            android:key="mqttUserName"
+            android:summary="Please your MQTT username"
+            android:hint="Enter your MQTT user name"></EditTextPreference>
+
+        <EditTextPreference android:title="MQTT User password"
+            android:key="mqttUserPassword"
+            android:summary="Please your MQTT password"
+            android:hint="Enter your MQTT password"
+            android:password="true">
+        </EditTextPreference>
+
+
+        <EditTextPreference android:title="MQTT IN topic"
+            android:key="mqttInTopic"
+            android:hint="Enter your MQTT topic for incoming messages">
+        </EditTextPreference>
+
+        <EditTextPreference android:title="MQTT OUT topic"
+            android:key="mqttOutTopic"
+            android:hint="Enter your MQTT topic for incoming messages">
+        </EditTextPreference>
+
+
+        <EditTextPreference android:title="MQTT server URL"
+            android:key="mqttServerUrl"
+            android:summary="Please your MQTT server url"
+            android:hint="Example: m14.cloudmqtt.com"></EditTextPreference>
+
+        <EditTextPreference
+            android:key="mqttServerPort"
+            android:title="MQTT server port"
+            android:defaultValue="1883"
+            android:hint="Please enter port, Example: 1883"
+            android:inputType="number"
+            ></EditTextPreference>
+
+
+
+</PreferenceCategory>
+</PreferenceScreen>

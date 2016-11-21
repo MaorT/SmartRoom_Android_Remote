@@ -1,12 +1,16 @@
 package com.example.maor.smartroom;
 
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
-import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,17 +23,13 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static MQTT mqtt;
-    Thread muThread = null;
+    Button btnSettings;
 
-    // MQTT Variable todo : move to save preference
-    public static String mqtt_in_topic = "sClock_reply";
-    public static String mqtt_out_topic = "sClock_cmd";
-    public static String mqtt_server_address = "m12.cloudmqtt.com";
-    public static String mqtt_userName = "xxxx";
-    public static String mqtt_password = "xxxx";
+    private static String LOG_TAG = "smartRoom";
 
-
+    private Intent serviceIntent;
+    private IntentFilter mIntentFilter;
+    public static final String mBroadcastStringAction = "com.example.maorservice.string";
 
     private boolean jsonFileOk = true;
 
@@ -42,7 +42,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ListView lv = (ListView) findViewById(R.id.listViewButtons);
         viewerConnectionTxt = (TextView)findViewById(R.id.textViewStatus);
-
+        btnSettings = (Button)findViewById(R.id.btnSettings);
+        Log.d(LOG_TAG,"MainActivity onCreate");
         ArrayList<IrDevice> devices = new ArrayList<>();
 
 
@@ -89,147 +90,37 @@ public class MainActivity extends AppCompatActivity {
         lv.setAdapter(adapter);
 
 
-        mqtt = new MQTT();
+        //Service commands
+        serviceIntent = new Intent(MainActivity.this, MQTT.class);
+        serviceIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
+        startService(serviceIntent);
+        Preferences.SetContext(this);
+        mIntentFilter = new IntentFilter();
+        mIntentFilter.addAction(mBroadcastStringAction);
+        registerReceiver(mReceiver,mIntentFilter);
 
-        RunConnectionAndSubscribeThread();
-        CheckForNewMessage_RunThread();
-
-    }
-
-    private void RunConnectionAndSubscribeThread()
-    {
-        muThread = new Thread(new Runnable() {
+        btnSettings.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                String ClientId = System.getProperty("user.name") + "." + System.currentTimeMillis();
-                // must connect first time otherwise it will be null and can't ask isConnected
-                //todo: change to SettingsActivity values
-               // mqtt.Connect(SettingsActivity.GetServerIP(), ClientId);
-               // mqtt.Subscribe(SettingsActivity.Get_MQTT_Topic());
-
-                mqtt.Connect(mqtt_server_address,16666,ClientId,mqtt_userName,mqtt_password);
-
-                mqtt.Subscribe(mqtt_in_topic);
-
-
-                while(!isDestroyed()) //while activity is running
-                {
-                    //todo: change to SettingsActivity values
-                   // final String newIp = SettingsActivity.GetServerIP();
-                  //  final String newTopic = SettingsActivity.Get_MQTT_Topic();
-                    final String newIp = mqtt_server_address;
-                    final String newTopic = mqtt_in_topic;
-                    //  Log.d("mbed_log","ViewerCompassThread");
-
-                    if(!mqtt.IsConnected())
-                    {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                viewerConnectionTxt.setText("Disconnected");
-                                viewerConnectionTxt.setTextColor(Color.RED);
-                               // txtServerIP.setText(newIp);
-                            }
-                        });
-                        // todo:change to connect with values from settings
-                       // mqtt.Connect(newIp, ClientId);
-                        mqtt.Connect(newIp,16666,ClientId,mqtt_userName,mqtt_password);
-                        mqtt.Subscribe(newTopic);
-                        try { Thread.sleep(50);} // todo: change re-connect timing
-                        catch (InterruptedException e) {e.printStackTrace();}
-
-                    }
-                    else
-                    {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                viewerConnectionTxt.setText("Connected");
-                                viewerConnectionTxt.setTextColor(Color.parseColor("#8BC34A")); //green
-                               // txtServerIP.setText(newIp);
-                               // CheckForNewMessage();
-                            }
-                        });
-                        try {Thread.sleep(1000);}
-                        catch (InterruptedException e) {e.printStackTrace();}
-
-                    }
-                }
-                mqtt.Disconnect();
+            public void onClick(View v) {
+                Intent i = new Intent(MainActivity.this,Preferences.class);
+                startActivity(i);
             }
         });
-        muThread.start();
     }
 
 
-    public void CheckForNewMessage() // todo: delete this func ?
-    {
-
-        Thread thread;
-
-       // Log.d("SmartRoom","entered to CheckForNewMessage function");
-
-        thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Log.d("SmartRoom","thread runing");
-                int triesConuter = 20;
-                while(!mqtt.HaveMessage() && triesConuter > 0 ){
-                    try {Thread.sleep(250);}
-                    catch (InterruptedException e) {e.printStackTrace();}
-                    triesConuter--;
-                }
-                if(mqtt.HaveMessage()) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getBaseContext(), mqtt.Get_Last_Subscribe_Msg().replace("replied:", ""), Toast.LENGTH_SHORT).show();
-                            Vibrator vibe = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
-                            vibe.vibrate(30);
-                        }
-                    });
-
-//            // Vibrate for 500 milliseconds
-//            v.vibrate(100);
-                }
-
-            }
-        });
-
-
-        thread.start();
-
-
+    private void StopService(){
+        serviceIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
+        startService(serviceIntent);
+        unregisterReceiver(mReceiver);
     }
 
-    public void CheckForNewMessage_RunThread()
-    {
-        Thread thread;
-        thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
 
-                while(!isDestroyed()){
-                    if(mqtt.HaveMessage()) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getBaseContext(), mqtt.Get_Last_Subscribe_Msg().replace("replied:", ""), Toast.LENGTH_SHORT).show();
-                                Vibrator vibe = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
-                                vibe.vibrate(50);
-                            }
-                        });
-                        try {Thread.sleep(500);}
-                        catch (InterruptedException e) {e.printStackTrace();}
-                     }
-                    else {
-                        try {Thread.sleep(100);}
-                        catch (InterruptedException e) {e.printStackTrace();}
-                    }
-                }
-            }
-        });
-        thread.start();
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        StopService();
     }
 
     public String OpenFile()
@@ -261,5 +152,48 @@ public class MainActivity extends AppCompatActivity {
         }
         return "";
     }
+
+
+
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(mBroadcastStringAction)) {
+                String topic = intent.getStringExtra("Topic");
+                String data = intent.getStringExtra("Data");
+                boolean retained = intent.getExtras().getBoolean("Retained");
+
+                if(data.length() == 0) // Ignore empty messages
+                    return;
+
+                // When receiving a system notifications and not a regular data
+                if(topic.equals("system")){
+                    if(data.equals("connected"))
+                        ChangeConnectionText(true);
+                    else if(data.equals("disconnected"))
+                        ChangeConnectionText(false);
+
+                    Toast.makeText(context,"Smartroom: " + data, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Toast.makeText(context,"Replied: " + data, Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+
+
+    private void ChangeConnectionText(boolean connected)
+    {
+        if(connected){
+            viewerConnectionTxt.setText("Connected");
+            viewerConnectionTxt.setTextColor(Color.GREEN);
+        }
+        else {
+            viewerConnectionTxt.setText("Disconnected");
+            viewerConnectionTxt.setTextColor(Color.RED);
+        }
+    }
+
 }
 

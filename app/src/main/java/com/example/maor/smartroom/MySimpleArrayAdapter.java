@@ -1,11 +1,9 @@
 package com.example.maor.smartroom;
+/**
+ * Created by Maor on 21/09/2016.
+ */
 
-import android.app.Activity;
 import android.content.Context;
-import android.os.AsyncTask;
-import android.os.Looper;
-import android.os.Vibrator;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,18 +11,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import java.util.ArrayList;
-import java.util.concurrent.RunnableFuture;
 
-import static android.content.Context.ACTIVITY_SERVICE;
-import static android.os.Looper.loop;
-import static com.example.maor.smartroom.MainActivity.mqtt;
 
-/**
- * Created by Maor on 21/09/2016.
- */
 
 public class MySimpleArrayAdapter extends ArrayAdapter<IrDevice> {
     private final Context context;
@@ -36,7 +25,6 @@ public class MySimpleArrayAdapter extends ArrayAdapter<IrDevice> {
         super(context, -1, devices);
         this.context = context;
         this.devices = devices;
-
     }
 
     public void SetMainActivity(MainActivity mainActivity){
@@ -62,11 +50,7 @@ public class MySimpleArrayAdapter extends ArrayAdapter<IrDevice> {
             btn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(mqtt != null) {
-                        mqtt.Publish(MainActivity.mqtt_out_topic, command.getCommandData());
-                    //    mainActivity.CheckForNewMessage();
-                      //  final Thread thread = null;
-                    }
+                        MQTT.Publish(Preferences.mqtt_out_topic, command.getCommandData());
                 }
             });
             buttonLayout.addView(btn);
