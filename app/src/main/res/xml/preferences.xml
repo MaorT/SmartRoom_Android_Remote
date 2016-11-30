@@ -6,22 +6,9 @@
 
     <PreferenceCategory android:title="Global Settings:">
         <CheckBoxPreference
-            android:key="notification_sound"
-            android:title="Notification sound"
-            android:defaultValue="false" />
-
-        <CheckBoxPreference
             android:key="notification_vibration"
             android:title="Notification vibration"
             android:defaultValue="false" />
-
-        <RingtonePreference
-            android:key="notification_ringtone"
-            android:title="Select notification sound"/>
-
-
-
-
 
     </PreferenceCategory>
 

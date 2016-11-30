@@ -47,7 +47,10 @@ public class MySimpleArrayAdapter extends ArrayAdapter<IrDevice> {
 
         IrDevice device = devices.get(position);
         LinearLayout buttonLayout = (LinearLayout)rowView.findViewById(R.id.layoutDeviceButtons);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT);
+        // todo : get the actual width, it's not 720 constant!!
+        int width = 720-(buttonsPerLine-1)*8; // remove num of gaps between the buttons multiple by the gap
+        int buttonWidth = width/buttonsPerLine;
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(buttonWidth, LinearLayout.LayoutParams.MATCH_PARENT);
         lp.setMargins(8,8,8,8);
 //        buttonLayout.setLayoutParams(lp);
         final ArrayList<IrCommand> commands = device.getCommands();

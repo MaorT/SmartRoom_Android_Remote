@@ -12,22 +12,14 @@ import android.widget.Toast;
 public class Preferences extends PreferenceActivity {
 
     private static Context context = null;
-
-    // MQTT Variable todo : move some of them to the save preference
-    // private  MqttClient client = null;
-    public static String mqtt_in_topic = "sClock_reply";
-    public static String mqtt_out_topic = "sClock_cmd";
-    public static String mqtt_server_address = "m12.cloudmqtt.com";
-    public static String mqtt_userName = "androidG2";
-    public static String mqtt_password = "Ag321";
-    public static int mqtt_port = 16666; // for demo, now using 16666
-    public static String notification_ringtone = "DEFAULT_RINGTONE_URI";
+    public static String mqtt_in_topic = "demo_reply";
+    public static String mqtt_out_topic = "demo_cmd";
+    public static String mqtt_server_address = "m17.mqtt.com";
+    public static String mqtt_userName = "your_user";
+    public static String mqtt_password = "your_password";
+    public static int mqtt_port = 1883; // for demo, now using 16666
     public static boolean notification_vibration = true;
-    public static boolean notification_sound = true;
-
-
-    // private static boolean settingsChanged_flag = false;
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,9 +86,8 @@ public class Preferences extends PreferenceActivity {
             SetPreferenceListenerByKey("mqttUserPassword");
             SetPreferenceListenerByKey("mqttServerUrl");
             SetPreferenceListenerByKey("mqttServerPort");
-            SetPreferenceListenerByKey("notification_sound");
             SetPreferenceListenerByKey("notification_vibration");
-            SetPreferenceListenerByKey("notification_ringtone");
+
         }
 
         private void SetPreferenceListenerByKey(String keyName){
@@ -153,8 +144,6 @@ public class Preferences extends PreferenceActivity {
         mqtt_out_topic = SP.getString("mqttOutTopic", "undefined");
         mqtt_port = Integer.parseInt(SP.getString("mqttServerPort", "1883"));
         notification_vibration = SP.getBoolean("notification_vibration", false);
-        notification_sound = SP.getBoolean("notification_sound", false);
-        notification_ringtone = SP.getString("notification_ringtone", "DEFAULT_RINGTONE_URI");
     }
 
     public static void SetContext(Context newContext){
