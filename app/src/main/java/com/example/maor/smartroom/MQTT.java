@@ -2,6 +2,7 @@ package com.example.maor.smartroom;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -21,18 +22,11 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 public class MQTT extends Service implements MqttCallback {
 
     private static MqttClient client;
-    private static boolean newDataFlag = false;
-
     final static String LOG_TAG = "smartRoom";
-
-   // private IntentFilter mIntentFilter;
     public static final String mBroadcastStringAction = "com.example.maorservice.string";
     String ClientId = System.getProperty("user.name") + "." + System.currentTimeMillis(); // Generate a unique user id
     private static boolean serviceOnFlag = false; //helps to know the service status (run/stop)
     Notification notification = null;
-  //  private static Context context = null;
-
-
 
     //region LifeCycle region
 
@@ -42,14 +36,18 @@ public class MQTT extends Service implements MqttCallback {
         if (intent.getAction().equals(Constants.ACTION.STARTFOREGROUND_ACTION)) {
             //context = this.getBaseContext();
             Preferences.LoadPreferences(getApplicationContext());
+
             Connect(Preferences.mqtt_server_address,Preferences.mqtt_port,ClientId,
                     Preferences.mqtt_userName,Preferences.mqtt_password);
+
             Subscribe(Preferences.mqtt_in_topic);
             serviceOnFlag = true;
             notification = BuildForegroundNotification(getString(R.string.app_name),"Connecting");
             TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
             stackBuilder.addParentStack(MainActivity.class);
             startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE,notification);
+
+
 
             if(IsConnected()){
                 Update_Foreground_Notification_Text("Connected"); // todo : Do something when unsuccessful connection
@@ -68,21 +66,20 @@ public class MQTT extends Service implements MqttCallback {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(LOG_TAG,"SmartRoom MQTT on destroy");
+       // Log.d(LOG_TAG,"SmartRoom MQTT on destroy");
         serviceOnFlag = false;
         if(client != null && IsConnected()){
             UnSubscribe(Preferences.mqtt_in_topic);
             Disconnect();
         }
-        Toast.makeText(getApplicationContext(), "Smartroom Service has been stopped", Toast.LENGTH_SHORT).show();
-        //unregisterReceiver(mReceiver);
+        //Toast.makeText(getApplicationContext(), "Smartroom Service has been stopped", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Toast.makeText(getApplicationContext(), "Smartroom Service has been started", Toast.LENGTH_SHORT).show();
-        Log.d(LOG_TAG,"SmartRoom MQTT on create");
+       // Toast.makeText(getApplicationContext(), "Smartroom Service has been started", Toast.LENGTH_SHORT).show();
+      //  Log.d(LOG_TAG,"SmartRoom MQTT on create");
     }
 
     @Override
@@ -261,15 +258,15 @@ public class MQTT extends Service implements MqttCallback {
         Bitmap largeIcon = BitmapFactory.decodeResource(getResources(),
                 R.drawable.remote1);
 
-//        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-//                notificationIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                notificationIntent, 0);
         Notification.Builder builder = new Notification.Builder(getApplicationContext());
         builder.setContentTitle(title);
         builder.setContentText(text);
         builder.setSmallIcon(R.drawable.remote1);
         builder.setLargeIcon(largeIcon);
         builder.setWhen(System.currentTimeMillis());
-    //    builder.setContentIntent(pendingIntent);
+        builder.setContentIntent(pendingIntent);
 
         return builder.build();
     }

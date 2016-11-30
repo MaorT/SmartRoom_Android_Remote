@@ -9,14 +9,12 @@
     android:weightSum="1"
     android:layout_alignParentTop="true"
     android:elevation="1dp"
-    android:background="@drawable/radial_blue_gradient">
+    android:background="@drawable/background_app">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/my_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:elevation="15dp"
+        android:layout_height="wrap_content"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         app:titleTextAppearance="@style/ActivityTitle" />

@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.os.AsyncTask;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -26,13 +28,13 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity{
 
 
-    private static String LOG_TAG = "smartRoom";
+    private  String LOG_TAG = "smartRoom";
 
     private Intent serviceIntent;
     private IntentFilter mIntentFilter;
     public static final String mBroadcastStringAction = "com.example.maorservice.string";
 
-    private boolean jsonFileOk = true;
+
 
     TextView viewerConnectionTxt;
 
@@ -41,13 +43,39 @@ public class MainActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ListView lv = (ListView) findViewById(R.id.listViewButtons);
         viewerConnectionTxt = (TextView)findViewById(R.id.textViewStatus);
-
-        Log.d(LOG_TAG,"MainActivity onCreate");
-        ArrayList<IrDevice> devices = new ArrayList<>();
+      //  Log.d(LOG_TAG,"MainActivity onCreate");
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
+        Preferences.SetContext(this);
+
+        // Create buttons and devices list from a json file
+        JsonAsyncTask jsonTask = new JsonAsyncTask();
+        try {
+            if(jsonTask.execute().get() == -1){
+                Toast.makeText(getBaseContext(),"Can't load the JSON file, please check the file", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+        catch (Exception e)
+        {
+            System.out.println(e);
+        }
+
+        StartService(); // Run foreground service, used to listen mqtt replies
+
+        // Register broadcast receiver, the broadcast receiver makes the toast notification for replies
+        mIntentFilter = new IntentFilter();
+        mIntentFilter.addAction(mBroadcastStringAction);
+        registerReceiver(mReceiver,mIntentFilter);
+    }
+
+
+    private boolean BuildFromJson()
+    {
+        ListView lv = (ListView) findViewById(R.id.listViewButtons);
+        ArrayList<IrDevice> devices = new ArrayList<>();
+        boolean jsonFileOk = true;
 
         // Load the Devices and Commands from a JSON file
         try {
@@ -64,14 +92,14 @@ public class MainActivity extends AppCompatActivity{
                 JSONArray jsonCommands_array = new JSONArray(commands);
                 for (int j = 0; j < jsonCommands_array.length(); j++) {
                     JSONObject jsonCommand = jsonCommands_array.getJSONObject(j);
-                        String commandName = jsonCommand.getString("cmdName");
-                        String commandData = jsonCommand.getString("cmdData");
-                        IrCommands.add(new IrCommand(commandName,commandData));
-                     }
+                    String commandName = jsonCommand.getString("cmdName");
+                    String commandData = jsonCommand.getString("cmdData");
+                    IrCommands.add(new IrCommand(commandName,commandData));
+                }
 
                 IrDevice device = new IrDevice(deviceName,IrCommands);
                 devices.add(device);
-                }
+            }
 
         }
         catch (Exception ex)
@@ -82,33 +110,36 @@ public class MainActivity extends AppCompatActivity{
 
         if(!jsonFileOk)
         {
-
-            Toast.makeText(getBaseContext(),"Can't load JSON file, please check it", Toast.LENGTH_SHORT).show();
-            return;
+            return false;
         }
+
         // Add all devices and their buttons to the listview
         MySimpleArrayAdapter adapter = new MySimpleArrayAdapter(this,devices);
         adapter.SetMainActivity(this);
         lv.setAdapter(adapter);
 
 
-        //Service commands
-        serviceIntent = new Intent(MainActivity.this, MQTT.class);
-        serviceIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
-        startService(serviceIntent);
-        Preferences.SetContext(this);
-        mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(mBroadcastStringAction);
-        registerReceiver(mReceiver,mIntentFilter);
 
+        return true;
     }
 
 
     private void StopService(){
+        if(serviceIntent == null)
+            return;
         serviceIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
-        startService(serviceIntent);
+        stopService(serviceIntent);
         unregisterReceiver(mReceiver);
     }
+
+
+    private void StartService(){
+        serviceIntent = new Intent(MainActivity.this, MQTT.class);
+        serviceIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
+        startService(serviceIntent);
+    }
+
+
 
 
 
@@ -172,6 +203,8 @@ public class MainActivity extends AppCompatActivity{
                     return;
                 }
 
+                if(Preferences.notification_vibration)
+                    Vibrate(100);
                 Toast.makeText(context,"Replied: " + data, Toast.LENGTH_SHORT).show();
             }
         }
@@ -188,6 +221,12 @@ public class MainActivity extends AppCompatActivity{
             viewerConnectionTxt.setText("Disconnected");
             viewerConnectionTxt.setTextColor(Color.RED);
         }
+    }
+
+    private void Vibrate(int ms){
+        Vibrator v = (Vibrator)getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+        v.vibrate(ms);
+
     }
 
     @Override
@@ -213,5 +252,17 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
-}
+    private class JsonAsyncTask extends AsyncTask<Void, Void, Integer> {
+
+        @Override
+        protected Integer doInBackground(Void... params) {
+            if(!BuildFromJson()) return -1;
+            return 0;
+        }
+    } // End of JsonAsyncTask
+
+
+
+
+} // End of MainActivity
 
