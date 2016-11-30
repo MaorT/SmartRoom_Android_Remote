@@ -11,7 +11,7 @@ the commands are fast and lightweight thanks to the MQTT protocol.
 * User friendly interface. 
 
 ## Android Application
-![Application](readme_images/app_screen.jpg)
+![Application](readme_images/android_screens.jpg)
 
 ## Smart room system \ Smart clock - External view
 ![SmartClock](readme_images/clock_external.jpg)  
