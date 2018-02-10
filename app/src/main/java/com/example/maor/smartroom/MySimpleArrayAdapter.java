@@ -77,7 +77,11 @@ public class MySimpleArrayAdapter extends ArrayAdapter<IrDevice> {
                 btn.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        MQTT.Publish(Preferences.mqtt_out_topic, command.getCommandData());
+                        String topic = Preferences.mqtt_out_topic;
+                        String message = command.getCommandData();
+//                        if(message.toUpperCase().contains("LIGHT"))
+//                            topic = "room_light_cmd";
+                        MQTT.Publish(topic, command.getCommandData());
                     }
                 });
                 // buttonLayout.addView(btn);

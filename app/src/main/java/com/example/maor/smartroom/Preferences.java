@@ -19,7 +19,7 @@ public class Preferences extends PreferenceActivity {
     public static String mqtt_password = "your_password";
     public static int mqtt_port = 1883; // for demo, now using 16666
     public static boolean notification_vibration = true;
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
